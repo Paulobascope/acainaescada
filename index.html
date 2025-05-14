@@ -11,7 +11,13 @@
 <body>
   <div id="game-container">
     <div id="game-card">
-      <h1 id="game-title">🍇 Açaí na Escada</h1>
+      
+      <!-- Novo topo com título e botões -->
+      <div id="header-bar">
+        <button id="toggle-sound" class="btn small-btn">🔊</button>
+        <h1 id="game-title">Açaí na Escada  </h1>
+        <button id="toggle-theme" class="btn small-btn">🌙</button>
+      </div>
 
       <div id="score-board">Pontuação: <span id="score">0</span></div>
 
@@ -23,13 +29,8 @@
         <button id="btn-right" class="btn">→</button>
       </div>
 
-      <button id="toggle-sound" class="btn">🔊 Som: On</button>
-      <button id="toggle-theme" class="btn">🌙 Tema: Escuro</button>
     </div>
-
-
   </div>
-  
 
   <div id="game-over-screen">
     <p>Game Over</p>
@@ -37,12 +38,15 @@
     <button id="restart-btn">Reiniciar</button>
   </div>
 
+  <!-- Sons -->
   <audio id="jump-sound" src="jump.mp3"></audio>
   <audio id="gameover-sound" src="gameover.mp3"></audio>
   <audio id="collect-sound" src="collect.mp3"></audio>
-<!-- Marca d'água -->
-<div class="watermark">Paulo Bascope - Inovação 2025</div>
 
+  <!-- Marca d'água -->
+  <div class="watermark">Paulo Bascope - Inovação 2025</div>
+
+  <!-- Script -->
   <script src="script.js"></script>
 </body>
 </html>

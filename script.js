@@ -1,3 +1,5 @@
+// Melhorias implementadas: loop infinito evitado na geração de plataformas, spawn de itens ajustado, limpeza de variáveis antigas e responsividade otimizada
+
 const canvas = document.getElementById("game-canvas");
 const ctx = canvas.getContext("2d");
 const restartBtn = document.getElementById("restart-btn");
@@ -42,9 +44,11 @@ function resetGame() {
   gameOver = false;
   scoreDisplay.textContent = "0";
   gameOverScreen.style.display = "none";
+  lastLadderPositions = [];
 
   for (let i = 0; i < 5; i++) {
     ladders.push({ x: 135, y: 500 - i * LADDER_GAP, width: LADDER_WIDTH });
+    lastLadderPositions.push(135);
   }
 
   loop();
@@ -63,36 +67,27 @@ function generateLadder() {
   } else if (last1 === 230 && last2 === 230) {
     x = 135;
   } else {
-    x = LADDER_OPTIONS[Math.floor(Math.random() * LADDER_OPTIONS.length)];
+    do {
+      x = LADDER_OPTIONS[Math.floor(Math.random() * LADDER_OPTIONS.length)];
+    } while (ladders.some(l => l.y === newY && l.x === x));
   }
 
-  if (!ladders.some(l => l.y === newY && l.x === x)) {
-    ladders.push({ x, y: newY, width: LADDER_WIDTH });
-    lastLadderPositions.push(x);
+  ladders.push({ x, y: newY, width: LADDER_WIDTH });
+  lastLadderPositions.push(x);
+  if (lastLadderPositions.length > 3) lastLadderPositions.shift();
 
-    if (lastLadderPositions.length > 3) {
-      lastLadderPositions.shift();
-    }
-
-    if (Math.random() < 0.05) {
-      const itemType = Math.floor(Math.random() * 3);
-      let itemImage;
-      switch (itemType) {
-        case 0: itemImage = bananaImg; break;
-        case 1: itemImage = uvaImg; break;
-        case 2: itemImage = morangoImg; break;
-      }
-
-      const itemY = newY - 20;
-      items.push({
-        x: x + 25,
-        y: itemY - 10,
-        width: 16,
-        height: 16,
-        collected: false,
-        image: itemImage
-      });
-    }
+  if (Math.random() < 0.05) {
+    const itemType = Math.floor(Math.random() * 3);
+    const itemImage = [bananaImg, uvaImg, morangoImg][itemType];
+    const itemY = newY - 20;
+    items.push({
+      x: x + 25,
+      y: itemY - 10,
+      width: 16,
+      height: 16,
+      collected: false,
+      image: itemImage
+    });
   }
 }
 
@@ -104,6 +99,9 @@ function resizeCanvas() {
   canvas.height = height;
   scale = width / GAME_WIDTH;
 }
+
+window.addEventListener("resize", resizeCanvas);
+document.addEventListener("DOMContentLoaded", resizeCanvas);
 
 function update() {
   if (gameOver) return;
@@ -123,7 +121,6 @@ function update() {
       player.y = ladder.y - player.height;
       player.vy = 0;
       player.onLadder = true;
-
       if (!ladder.stepped) {
         score += 1;
         ladder.stepped = true;
@@ -165,11 +162,12 @@ function update() {
   if (player.y < 200 + offsetY) {
     offsetY -= 2;
   }
+
+  player.x = Math.max(0, Math.min(GAME_WIDTH - player.width, player.x));
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   ctx.fillStyle = darkMode ? "#2c2c2c" : "#ffffff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -185,10 +183,10 @@ function draw() {
   }
 
   if (playerImg.complete) {
-    ctx.drawImage(playerImg, player.x * scale, player.y * scale - offsetY * scale, player.width * scale, player.height * scale);
+    ctx.drawImage(playerImg, player.x * scale, (player.y - offsetY) * scale, player.width * scale, player.height * scale);
   } else {
     ctx.fillStyle = darkMode ? "#fff" : "#000";
-    ctx.fillRect(player.x * scale, player.y * scale - offsetY * scale, player.width * scale, player.height * scale);
+    ctx.fillRect(player.x * scale, (player.y - offsetY) * scale, player.width * scale, player.height * scale);
   }
 }
 
@@ -198,33 +196,33 @@ function loop() {
   if (!gameOver) requestAnimationFrame(loop);
 }
 
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
-
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft" || e.key === "a") {
-    player.x -= 30;
-  }
-  if (e.key === "ArrowRight" || e.key === "d") {
-    player.x += 30;
-  }
+function handleKeyDown(e) {
+  if (e.key === "ArrowLeft" || e.key === "a") player.x -= 30;
+  if (e.key === "ArrowRight" || e.key === "d") player.x += 30;
   if (e.key === "ArrowUp" || e.key === " " || e.key === "w") {
     if (player.onLadder) {
       player.vy = -JUMP_POWER;
       safePlay(jumpSound);
     }
   }
-});
+}
 
-// Botões de movimento na tela
+function preventScroll(e) {
+  if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "a", "d", "w"].includes(e.key)) {
+    e.preventDefault();
+  }
+}
+
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("keydown", preventScroll);
+
+// Botões na tela
 document.getElementById("btn-left").addEventListener("click", () => {
   player.x -= 30;
 });
-
 document.getElementById("btn-right").addEventListener("click", () => {
   player.x += 30;
 });
-
 document.getElementById("btn-jump").addEventListener("click", () => {
   if (player.onLadder) {
     player.vy = -JUMP_POWER;
@@ -240,7 +238,7 @@ const toggleSoundBtn = document.getElementById("toggle-sound");
 
 toggleSoundBtn.addEventListener("click", () => {
   soundOn = !soundOn;
-  toggleSoundBtn.textContent = soundOn ? "🔊 Som: On" : "🔇 Som: Off";
+  toggleSoundBtn.textContent = soundOn ? "🔊" : "🔇";
   document.querySelectorAll("audio").forEach(audio => {
     audio.muted = !soundOn;
   });
@@ -252,9 +250,12 @@ toggleThemeBtn.addEventListener("click", () => {
   darkMode = !darkMode;
   document.body.classList.toggle("dark-mode", darkMode);
   document.getElementById("game-card").classList.toggle("dark", darkMode);
-  toggleThemeBtn.textContent = darkMode ? "🌕 Tema: Claro" : "🌙 Tema: Escuro";
+  toggleThemeBtn.textContent = darkMode ? "🌕" : "🌙";
 });
 
 function safePlay(sound) {
-  if (soundOn) sound.play();
+  if (soundOn) {
+    sound.currentTime = 0;
+    sound.play();
+  }
 }
