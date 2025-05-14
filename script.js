@@ -251,25 +251,3 @@ function safePlay(sound) {
   if (soundOn) sound.play();
 }
 
-// Controle de toque para dispositivos móveis
-document.addEventListener("touchstart", e => {
-  e.preventDefault();
-
-  const touchX = e.touches[0].clientX;
-  const touchY = e.touches[0].clientY;
-
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
-
-  if (touchX < screenWidth / 2) {
-    player.x -= 20; // Mover para a esquerda
-  } else {
-    player.x += 20; // Mover para a direita
-  }
-
-  if (touchY < screenHeight / 2 && player.onLadder) {
-    player.vy = -JUMP_POWER; // Pular
-    player.onLadder = false;
-    safePlay(jumpSound);
-  }
-});
