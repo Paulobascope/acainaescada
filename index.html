@@ -2,19 +2,20 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Açaí na Estrada</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Açaí na Escada</title>
+  <link rel="icon" href="logo1.svg" type="image/png">
   <link rel="stylesheet" href="style.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
   <div id="game-container">
     <div id="game-card">
-      <h1 id="game-title">🍇 Açaí na Estrada</h1>
+      <h1 id="game-title">🍇 Açaí na Escada</h1>
 
       <div id="score-board">Pontuação: <span id="score">0</span></div>
 
-      <canvas id="game-canvas" width="350" height="540" aria-label="Área do jogo"></canvas>
+      <canvas id="game-canvas" aria-label="Área do jogo"></canvas>
 
       <div id="controls">
         <button id="btn-left" class="btn">←</button>
@@ -25,7 +26,10 @@
       <button id="toggle-sound" class="btn">🔊 Som: On</button>
       <button id="toggle-theme" class="btn">🌙 Tema: Escuro</button>
     </div>
+
+
   </div>
+  
 
   <div id="game-over-screen">
     <p>Game Over</p>
@@ -36,6 +40,8 @@
   <audio id="jump-sound" src="jump.mp3"></audio>
   <audio id="gameover-sound" src="gameover.mp3"></audio>
   <audio id="collect-sound" src="collect.mp3"></audio>
+<!-- Marca d'água -->
+<div class="watermark">Paulo Bascope - Inovação 2025</div>
 
   <script src="script.js"></script>
 </body>

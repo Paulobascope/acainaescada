@@ -8,8 +8,8 @@ const jumpSound = document.getElementById("jump-sound");
 const gameOverSound = document.getElementById("gameover-sound");
 const collectSound = document.getElementById("collect-sound");
 
-const GAME_WIDTH = canvas.width;
-const GAME_HEIGHT = canvas.height;
+const GAME_WIDTH = 350;
+const GAME_HEIGHT = 540;
 
 const GRAVITY = 0.6;
 const JUMP_POWER = 12;
@@ -21,7 +21,19 @@ const LADDER_OPTIONS = [50, 135, 230];
 let playerImg = new Image();
 playerImg.src = "personagem.svg";
 
-let player, ladders, offsetY, score, items, gameOver;
+// Carregando as imagens dos itens
+let bananaImg = new Image();
+bananaImg.src = "banana.png";
+let uvaImg = new Image();
+uvaImg.src = "uva.png";
+let morangoImg = new Image();
+morangoImg.src = "morango.png";
+
+let player, ladders, offsetY, score, items, gameOver, darkMode;
+darkMode = false;
+let scale = 1;
+
+let lastLadderPositions = [];
 
 function resetGame() {
   player = { x: 135, y: 400, width: 32, height: 32, vy: 0, onLadder: false };
@@ -41,17 +53,59 @@ function resetGame() {
 }
 
 function generateLadder() {
-  const x = LADDER_OPTIONS[Math.floor(Math.random() * LADDER_OPTIONS.length)];
   const lastY = ladders[ladders.length - 1].y;
   const newY = lastY - LADDER_GAP;
 
+  let x;
+
+  const last1 = lastLadderPositions[lastLadderPositions.length - 1];
+  const last2 = lastLadderPositions[lastLadderPositions.length - 2];
+
+  if (last1 === 50 && last2 === 50) {
+    x = 135;
+  } else if (last1 === 230 && last2 === 230) {
+    x = 135;
+  } else {
+    x = LADDER_OPTIONS[Math.floor(Math.random() * LADDER_OPTIONS.length)];
+  }
+
   if (!ladders.some(l => l.y === newY && l.x === x)) {
     ladders.push({ x, y: newY, width: LADDER_WIDTH });
+    lastLadderPositions.push(x);
 
-    if (Math.random() < 0.3) {
-      items.push({ x: x + 25, y: newY - 10, width: 16, height: 16, collected: false });
+    if (lastLadderPositions.length > 3) {
+      lastLadderPositions.shift();
+    }
+
+    if (Math.random() < 0.05) {
+      const itemType = Math.floor(Math.random() * 3);
+
+      let itemImage;
+      switch (itemType) {
+        case 0:
+          itemImage = bananaImg;
+          break;
+        case 1:
+          itemImage = uvaImg;
+          break;
+        case 2:
+          itemImage = morangoImg;
+          break;
+      }
+
+      const itemY = newY - 20;
+      items.push({ x: x + 25, y: itemY - 10, width: 16, height: 16, collected: false, image: itemImage });
     }
   }
+}
+
+function resizeCanvas() {
+  const container = document.getElementById("game-card");
+  const width = container.clientWidth;
+  const height = width * (GAME_HEIGHT / GAME_WIDTH);
+  canvas.width = width;
+  canvas.height = height;
+  scale = width / GAME_WIDTH;
 }
 
 function update() {
@@ -113,34 +167,31 @@ function update() {
 
   if (player.y < 200 + offsetY) {
     offsetY -= 2;
-    if (score % 100 === 0) {
-      document.body.style.background = `linear-gradient(to bottom, #${Math.floor(Math.random() * 16777215).toString(16)}, #4b0082)`;
-    }
   }
 }
 
 function draw() {
-  ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = darkMode ? "#2c2c2c" : "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   for (let ladder of ladders) {
-    ctx.fillStyle = "#a561cc";
-    ctx.fillRect(ladder.x, ladder.y - offsetY, ladder.width, LADDER_HEIGHT);
+    ctx.fillStyle = darkMode ? "#4b0082" : "#a561cc";
+    ctx.fillRect(ladder.x * scale, (ladder.y - offsetY) * scale, ladder.width * scale, LADDER_HEIGHT * scale);
   }
 
   for (let item of items) {
     if (!item.collected) {
-      ctx.fillStyle = "#8e24aa";
-      ctx.beginPath();
-      ctx.arc(item.x, item.y - offsetY, 8, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.drawImage(item.image, item.x * scale, (item.y - offsetY) * scale, item.width * scale, item.height * scale);
     }
   }
 
   if (playerImg.complete) {
-    ctx.drawImage(playerImg, player.x, player.y - offsetY, player.width, player.height);
+    ctx.drawImage(playerImg, player.x * scale, player.y * scale - offsetY * scale, player.width * scale, player.height * scale);
   } else {
-    ctx.fillStyle = "purple";
-    ctx.fillRect(player.x, player.y - offsetY, player.width, player.height);
+    ctx.fillStyle = darkMode ? "#fff" : "#000";
+    ctx.fillRect(player.x * scale, player.y * scale - offsetY * scale, player.width * scale, player.height * scale);
   }
 }
 
@@ -150,7 +201,9 @@ function loop() {
   if (!gameOver) requestAnimationFrame(loop);
 }
 
-// Controles do teclado
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
 document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") player.x -= 20;
   if (e.key === "ArrowRight") player.x += 20;
@@ -161,7 +214,6 @@ document.addEventListener("keydown", e => {
   }
 });
 
-// Botões
 document.getElementById("btn-left").addEventListener("click", () => player.x -= 20);
 document.getElementById("btn-right").addEventListener("click", () => player.x += 20);
 document.getElementById("btn-jump").addEventListener("click", () => {
@@ -175,27 +227,49 @@ document.getElementById("btn-jump").addEventListener("click", () => {
 restartBtn.addEventListener("click", () => resetGame());
 playerImg.onload = () => resetGame();
 
-
-// 🔊 Botão de som
 let soundOn = true;
 const toggleSoundBtn = document.getElementById("toggle-sound");
 
 toggleSoundBtn.addEventListener("click", () => {
   soundOn = !soundOn;
   toggleSoundBtn.textContent = soundOn ? "🔊 Som: On" : "🔇 Som: Off";
+  document.querySelectorAll("audio").forEach(audio => {
+    audio.muted = !soundOn;
+  });
 });
 
-function safePlay(audio) {
-  if (soundOn) audio.play();
-}
-
-
-// 🌙 Botão de tema claro/escuro
 const toggleThemeBtn = document.getElementById("toggle-theme");
-const gameCard = document.getElementById("game-card");
 
 toggleThemeBtn.addEventListener("click", () => {
-  gameCard.classList.toggle("dark");
-  const darkMode = gameCard.classList.contains("dark");
-  toggleThemeBtn.textContent = darkMode ? "☀️ Tema: Claro" : "🌙 Tema: Escuro";
+  darkMode = !darkMode;
+  document.body.classList.toggle("dark-mode", darkMode);
+  document.getElementById("game-card").classList.toggle("dark", darkMode);
+  toggleThemeBtn.textContent = darkMode ? "🌕 Tema: Claro" : "🌙 Tema: Escuro";
+});
+
+function safePlay(sound) {
+  if (soundOn) sound.play();
+}
+
+// Controle de toque para dispositivos móveis
+document.addEventListener("touchstart", e => {
+  e.preventDefault();
+
+  const touchX = e.touches[0].clientX;
+  const touchY = e.touches[0].clientY;
+
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+
+  if (touchX < screenWidth / 2) {
+    player.x -= 20; // Mover para a esquerda
+  } else {
+    player.x += 20; // Mover para a direita
+  }
+
+  if (touchY < screenHeight / 2 && player.onLadder) {
+    player.vy = -JUMP_POWER; // Pular
+    player.onLadder = false;
+    safePlay(jumpSound);
+  }
 });
