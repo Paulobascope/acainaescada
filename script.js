@@ -21,7 +21,6 @@ const LADDER_OPTIONS = [50, 135, 230];
 let playerImg = new Image();
 playerImg.src = "personagem.svg";
 
-// Carregando as imagens dos itens
 let bananaImg = new Image();
 bananaImg.src = "banana.png";
 let uvaImg = new Image();
@@ -32,7 +31,6 @@ morangoImg.src = "morango.png";
 let player, ladders, offsetY, score, items, gameOver, darkMode;
 darkMode = false;
 let scale = 1;
-
 let lastLadderPositions = [];
 
 function resetGame() {
@@ -57,7 +55,6 @@ function generateLadder() {
   const newY = lastY - LADDER_GAP;
 
   let x;
-
   const last1 = lastLadderPositions[lastLadderPositions.length - 1];
   const last2 = lastLadderPositions[lastLadderPositions.length - 2];
 
@@ -79,22 +76,22 @@ function generateLadder() {
 
     if (Math.random() < 0.05) {
       const itemType = Math.floor(Math.random() * 3);
-
       let itemImage;
       switch (itemType) {
-        case 0:
-          itemImage = bananaImg;
-          break;
-        case 1:
-          itemImage = uvaImg;
-          break;
-        case 2:
-          itemImage = morangoImg;
-          break;
+        case 0: itemImage = bananaImg; break;
+        case 1: itemImage = uvaImg; break;
+        case 2: itemImage = morangoImg; break;
       }
 
       const itemY = newY - 20;
-      items.push({ x: x + 25, y: itemY - 10, width: 16, height: 16, collected: false, image: itemImage });
+      items.push({
+        x: x + 25,
+        y: itemY - 10,
+        width: 16,
+        height: 16,
+        collected: false,
+        image: itemImage
+      });
     }
   }
 }
@@ -198,48 +195,66 @@ function draw() {
 function loop() {
   update();
   draw();
-  requestAnimationFrame(loop);
+  if (!gameOver) requestAnimationFrame(loop);
 }
 
-function safePlay(sound) {
-  if (sound && sound.paused) {
-    sound.play();
-  }
-}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft" || e.key === "a") {
-    player.x -= 5;
+    player.x -= 30;
   }
   if (e.key === "ArrowRight" || e.key === "d") {
-    player.x += 5;
+    player.x += 30;
   }
   if (e.key === "ArrowUp" || e.key === " " || e.key === "w") {
     if (player.onLadder) {
       player.vy = -JUMP_POWER;
+      safePlay(jumpSound);
     }
   }
 });
 
+// Botões de movimento na tela
 document.getElementById("btn-left").addEventListener("click", () => {
-  player.x -= 5;
+  player.x -= 30;
 });
 
 document.getElementById("btn-right").addEventListener("click", () => {
-  player.x += 5;
+  player.x += 30;
 });
 
 document.getElementById("btn-jump").addEventListener("click", () => {
   if (player.onLadder) {
     player.vy = -JUMP_POWER;
+    safePlay(jumpSound);
   }
 });
 
-restartBtn.addEventListener("click", () => {
-  resetGame();
+restartBtn.addEventListener("click", () => resetGame());
+playerImg.onload = () => resetGame();
+
+let soundOn = true;
+const toggleSoundBtn = document.getElementById("toggle-sound");
+
+toggleSoundBtn.addEventListener("click", () => {
+  soundOn = !soundOn;
+  toggleSoundBtn.textContent = soundOn ? "🔊 Som: On" : "🔇 Som: Off";
+  document.querySelectorAll("audio").forEach(audio => {
+    audio.muted = !soundOn;
+  });
 });
 
-window.addEventListener("resize", resizeCanvas);
+const toggleThemeBtn = document.getElementById("toggle-theme");
 
-resizeCanvas();
-resetGame();
+toggleThemeBtn.addEventListener("click", () => {
+  darkMode = !darkMode;
+  document.body.classList.toggle("dark-mode", darkMode);
+  document.getElementById("game-card").classList.toggle("dark", darkMode);
+  toggleThemeBtn.textContent = darkMode ? "🌕 Tema: Claro" : "🌙 Tema: Escuro";
+});
+
+function safePlay(sound) {
+  if (soundOn) sound.play();
+}
