@@ -198,56 +198,48 @@ function draw() {
 function loop() {
   update();
   draw();
-  if (!gameOver) requestAnimationFrame(loop);
+  requestAnimationFrame(loop);
 }
 
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+function safePlay(sound) {
+  if (sound && sound.paused) {
+    sound.play();
+  }
+}
 
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") player.x -= 20;
-  if (e.key === "ArrowRight") player.x += 20;
-  if ((e.key === "ArrowUp" || e.key === " ") && player.onLadder) {
-    player.vy = -JUMP_POWER;
-    player.onLadder = false;
-    safePlay(jumpSound);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft" || e.key === "a") {
+    player.x -= 5;
+  }
+  if (e.key === "ArrowRight" || e.key === "d") {
+    player.x += 5;
+  }
+  if (e.key === "ArrowUp" || e.key === " " || e.key === "w") {
+    if (player.onLadder) {
+      player.vy = -JUMP_POWER;
+    }
   }
 });
 
-document.getElementById("btn-left").addEventListener("click", () => player.x -= 20);
-document.getElementById("btn-right").addEventListener("click", () => player.x += 20);
+document.getElementById("btn-left").addEventListener("click", () => {
+  player.x -= 5;
+});
+
+document.getElementById("btn-right").addEventListener("click", () => {
+  player.x += 5;
+});
+
 document.getElementById("btn-jump").addEventListener("click", () => {
   if (player.onLadder) {
     player.vy = -JUMP_POWER;
-    player.onLadder = false;
-    safePlay(jumpSound);
   }
 });
 
-restartBtn.addEventListener("click", () => resetGame());
-playerImg.onload = () => resetGame();
-
-let soundOn = true;
-const toggleSoundBtn = document.getElementById("toggle-sound");
-
-toggleSoundBtn.addEventListener("click", () => {
-  soundOn = !soundOn;
-  toggleSoundBtn.textContent = soundOn ? "🔊 Som: On" : "🔇 Som: Off";
-  document.querySelectorAll("audio").forEach(audio => {
-    audio.muted = !soundOn;
-  });
+restartBtn.addEventListener("click", () => {
+  resetGame();
 });
 
-const toggleThemeBtn = document.getElementById("toggle-theme");
+window.addEventListener("resize", resizeCanvas);
 
-toggleThemeBtn.addEventListener("click", () => {
-  darkMode = !darkMode;
-  document.body.classList.toggle("dark-mode", darkMode);
-  document.getElementById("game-card").classList.toggle("dark", darkMode);
-  toggleThemeBtn.textContent = darkMode ? "🌕 Tema: Claro" : "🌙 Tema: Escuro";
-});
-
-function safePlay(sound) {
-  if (soundOn) sound.play();
-}
-
+resizeCanvas();
+resetGame();
